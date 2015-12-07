@@ -40,13 +40,14 @@ function p_draw(p)
   local w=7
   local h=15
   line(p.x-w*sy,p.y+w*sx,
-       p.x+w*sx,p.y-h*sy,5)
+       p.x+h*sx,p.y+h*sy,5)
+  line(p.x+h*sx,p.y+h*sy,
+       p.x+w*sy,p.y-w*sx,5)
   line(p.x+w*sy,p.y-w*sx,
-       p.x+w*sx,p.y-h*sy,5)
-  line(p.x+w*sy,p.y-w*sx,
-       p.x-w*sx,p.y+w*sy,5)
-  line(p.x-w*sy,p.y+w*sx,
-       p.x-w*sx,p.y+w*sy,5)
+       p.x-w*sx,p.y-w*sy,5)
+  line(p.x-w*sx,p.y-w*sy,
+       p.x-w*sy,p.y+w*sx,
+       5)
   spr(p.s,p.x-3,p.y-3)
 end
 
@@ -78,6 +79,7 @@ function p_update(p)
   p.vy+=p.vy*p.f_f
   p.x+=p.vx
   p.y+=p.vy
+  p.t+=0.03
 end
 __gfx__
 00000000006776000067600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
