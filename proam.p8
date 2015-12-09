@@ -15,13 +15,15 @@ function player(x,y)
   p.y=y
   p.t=0.25
   p.mass=10
+  p.m_of_i=10000
   p.f_friction=-0.1
+  p.f_friction_t=-0.2
   p.vx=0
   p.vy=0
   p.vt=0
   p.rocket_y=12
-  p.rocket_t=0.75
-  p.rocket_t_turn=0.1
+  p.rocket_t=0
+  p.rocket_t_turn=-0.05
   p.rocket_f=0
   p.rocket_f_on=10
   return p
@@ -42,8 +44,8 @@ function p_draw(p)
   local w=7
   local h=15
   local rocket_color=6
-  local rx=cos(p.rocket_t)
-  local ry=sin(p.rocket_t)
+  local rx=cos(p.rocket_t+p.t)
+  local ry=sin(p.rocket_t+p.t)
   line(p.x-w*sy,p.y+w*sx,
        p.x+h*sx,p.y+h*sy,5)
   line(p.x+h*sx,p.y+h*sy,
@@ -60,8 +62,8 @@ function p_draw(p)
   
   line(p.x+p.rocket_y*sx,
        p.y+p.rocket_y*sy,
-       p.x+p.rocket_y*sx+h*rx/2,
-       p.y+p.rocket_y*sy+h*ry/2,
+       p.x+p.rocket_y*sx-h*rx/2,
+       p.y+p.rocket_y*sy-h*ry/2,
        rocket_color)
 end
 
@@ -73,10 +75,13 @@ end
 
 function p_up_controls(p) 
   p.rocket_f=0
-  if btn(2,p.i) then
+  if btn(2,p.i) and not btn(3,p.i) then
     p.rocket_f=p.rocket_f_on
   end
-  p.rocket_t=0.75
+  if btn(3,p.i) and not btn(2,p.i) then
+    p.rocket_f=-p.rocket_f_on
+  end
+  p.rocket_t=0.0
   if btn(0,p.i) and not btn(1,p.i) then
     p.rocket_t-=p.rocket_t_turn
   end
@@ -90,6 +95,15 @@ function p_up_physics(p)
   local fy=0
   local momentum_a=0
 
+  if p.rocket_f != 0 then
+    local rx=cos(p.rocket_t+p.t)
+    local ry=sin(p.rocket_t+p.t)
+    local rt=sin(p.rocket_t)
+    fx=p.rocket_f*rx
+    fy=p.rocket_f*ry
+    momentum_a=-rt*p.rocket_f*p.rocket_y
+  end
+
   p.vx+=fx/p.mass
   p.vy+=fy/p.mass
   p.vx+=p.vx*p.f_friction
@@ -97,8 +111,8 @@ function p_up_physics(p)
   p.x+=p.vx
   p.y+=p.vy
 
-  p.vt+=momentum_a/p.mass
-  p.vt+=p.vt*p.f_friction
+  p.vt+=momentum_a/p.m_of_i
+  p.vt+=p.vt*p.f_friction_t
   p.t+=p.vt
 end
 __gfx__
