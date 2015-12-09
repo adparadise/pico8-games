@@ -19,8 +19,8 @@ function player(x,y)
   p.vx=0
   p.vy=0
   p.vt=0
-  p.rocket_y=7
-  p.rocket_t=0
+  p.rocket_y=12
+  p.rocket_t=0.75
   p.rocket_t_turn=0.1
   p.rocket_f=0
   p.rocket_f_on=10
@@ -42,6 +42,8 @@ function p_draw(p)
   local w=7
   local h=15
   local rocket_color=6
+  local rx=cos(p.rocket_t)
+  local ry=sin(p.rocket_t)
   line(p.x-w*sy,p.y+w*sx,
        p.x+h*sx,p.y+h*sy,5)
   line(p.x+h*sx,p.y+h*sy,
@@ -58,10 +60,9 @@ function p_draw(p)
   
   line(p.x+p.rocket_y*sx,
        p.y+p.rocket_y*sy,
-       p.x+p.rocket_y*sx,
-       p.y+p.rocket_y*sy,
+       p.x+p.rocket_y*sx+h*rx/2,
+       p.y+p.rocket_y*sy+h*ry/2,
        rocket_color)
-  
 end
 
 s2=sqrt(2)
@@ -75,12 +76,12 @@ function p_up_controls(p)
   if btn(2,p.i) then
     p.rocket_f=p.rocket_f_on
   end
-  p.rocket_t=0
+  p.rocket_t=0.75
   if btn(0,p.i) and not btn(1,p.i) then
-    p.rocket_t=-p.rocket_t_turn
+    p.rocket_t-=p.rocket_t_turn
   end
   if btn(1,p.i) and not btn(0,p.i) then
-    p.rocket_t=p.rocket_t_turn
+    p.rocket_t+=p.rocket_t_turn
   end
 end
 
