@@ -24,6 +24,7 @@ function player(x,y)
   p.rocket_y=12
   p.rocket_t=0
   p.rocket_t_turn=-0.05
+  p.rocket_t_zero=0
   p.rocket_f=0
   p.rocket_f_on=15
   return p
@@ -116,16 +117,23 @@ function p_up_physics(p)
   local fx=0
   local fy=0
   local momentum_a=0
+  local rx=cos(p.rocket_t+p.t)
+  local ry=sin(p.rocket_t+p.t)
+  local rt=sin(p.rocket_t)
 
   if p.rocket_f != 0 then
-    local rx=cos(p.rocket_t+p.t)
-    local ry=sin(p.rocket_t+p.t)
-    local rt=sin(p.rocket_t)
-    fx=p.rocket_f*rx
-    fy=p.rocket_f*ry
-    momentum_a=-rt*p.rocket_f*p.rocket_y
+    fx+=p.rocket_f*rx
+    fy+=p.rocket_f*ry
+    momentum_a+=-rt*p.rocket_f*p.rocket_y
   end
 
+  if p.rocket_f == 0 and p.rocket_t != p.rocket_t_zero then
+    fx+=p.vx*rx*p.f_friction
+    fy+=p.vy*ry*p.f_friction
+    local speed = sqrt(p.vx*p.vx+p.vy*p.vy) 
+    momentum_a+=-rt*speed*p.f_friction*p.rocket_y
+  end
+  
   p.vx+=fx/p.mass
   p.vy+=fy/p.mass
   p.vx+=p.vx*p.f_friction
