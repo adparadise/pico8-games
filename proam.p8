@@ -15,7 +15,7 @@ function player(x,y)
   p.y=y
   p.t=0.25
   p.mass=10
-  p.m_of_i=10000
+  p.m_of_i=20000
   p.f_friction=-0.1
   p.f_friction_t=-0.2
   p.vx=0
@@ -25,7 +25,7 @@ function player(x,y)
   p.rocket_t=0
   p.rocket_t_turn=-0.05
   p.rocket_f=0
-  p.rocket_f_on=10
+  p.rocket_f_on=15
   return p
 end
 
@@ -44,16 +44,19 @@ end
 
 function w_draw(x,y,vx,vy)
   local span=32
-  ox=x-x%span-span*3
-  oy=y-y%span-span*3
+  local ox=x-x%span-span*3
+  local oy=y-y%span-span*3
+  local basemod=(ox+oy)%(span*2)/span
   for i=1,6 do
     for j=1,6 do
+      if (i+j)%2 == basemod then
       px=ox+i*span
       py=oy+j*span
       line(px+vx,py+vy,
-           px+vx*2,py+vy*2,5)
+           px+vx*2,py+vy*2,1)
       line(px,py,
-           px+vx,py+vy,6)
+           px+vx,py+vy,13)
+      end
     end
   end
 end
