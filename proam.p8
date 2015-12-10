@@ -17,13 +17,13 @@ function player(x,y)
   p.mass=10
   p.m_of_i=20000
   p.f_friction=-0.1
-  p.f_friction_t=-0.2
+  p.f_friction_t=-0.1
   p.vx=0
   p.vy=0
   p.vt=0
   p.rocket_y=12
   p.rocket_t=0
-  p.rocket_t_turn=-0.05
+  p.rocket_t_turn=-0.07
   p.rocket_t_zero=0
   p.rocket_f=0
   p.rocket_f_on=15
@@ -80,15 +80,6 @@ function p_draw(p)
        p.x-w*sy,p.y+w*sx,
        5)
   spr(p.s,p.x-3,p.y-3)
-  if p.rocket_f != 0 then
-    rocket_color=9
-  end
-  
-  line(p.x+p.rocket_y*sx,
-       p.y+p.rocket_y*sy,
-       p.x+p.rocket_y*sx-h*rx/2,
-       p.y+p.rocket_y*sy-h*ry/2,
-       rocket_color)
 end
 
 function p_update(p)
@@ -128,10 +119,10 @@ function p_up_physics(p)
   end
 
   if p.rocket_f == 0 and p.rocket_t != p.rocket_t_zero then
-    fx+=p.vx*rx*p.f_friction
-    fy+=p.vy*ry*p.f_friction
+    fx+=p.vx*rx*p.f_friction*4
+    fy+=p.vy*ry*p.f_friction*4
     local speed = sqrt(p.vx*p.vx+p.vy*p.vy) 
-    momentum_a+=-rt*speed*p.f_friction*p.rocket_y
+    momentum_a+=rt*speed*p.f_friction*p.rocket_y*4
   end
   
   p.vx+=fx/p.mass
