@@ -36,17 +36,24 @@ end
 function _draw()
   cls()
   camera(p1.x-64,p1.y-64)
-  w_draw(p1.x,p1.y)
+  w_draw(p1.x,p1.y,
+         p1.vx,
+         p1.vy)
   p_draw(p1) 
 end
 
-function w_draw(x,y)
+function w_draw(x,y,vx,vy)
   local span=32
-  ox=x-x%span
-  oy=y-y%span
-  for i=1,4 do
-    for j=1,4 do
-     spr(3,ox+i*span,oy*j*span)
+  ox=x-x%span-span*3
+  oy=y-y%span-span*3
+  for i=1,6 do
+    for j=1,6 do
+      px=ox+i*span
+      py=oy+j*span
+      line(px+vx,py+vy,
+           px+vx*2,py+vy*2,5)
+      line(px,py,
+           px+vx,py+vy,6)
     end
   end
 end
