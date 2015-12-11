@@ -48,6 +48,10 @@ function w_draw(x,y,vx,vy)
   local ox=x-x%span-span*3
   local oy=y-y%span-span*3
   local basemod=(ox+oy)%(span*2)/span
+  local size=sqrt(vx*vx+vy*vy)
+  if size<0x0.0001 then
+    size=0x0.0001
+  end
   for i=1,6 do
     for j=1,6 do
       if (i+j)%2 == basemod then
@@ -55,6 +59,8 @@ function w_draw(x,y,vx,vy)
       py=oy+j*span
       line(px+vx,py+vy,
            px+vx*2,py+vy*2,1)
+      line(px-vx/size,py+vx/size,
+      	    px+vx,py+vy,1)
       line(px,py,
            px+vx,py+vy,13)
       end
