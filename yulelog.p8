@@ -2,30 +2,41 @@ pico-8 cartridge // http://www.pico-8.com
 version 5
 __lua__
 
+cx=52
+cy=96
+w=60
+h=20
+
 logs={}
 hots={}
+licks={}
 
 function _init()
-  local w=60
-  local h=20
   for i=0,3 do
-    local x=20+rnd(20)
-    local y=80+rnd(12)
+    local x=cx-w/2+rnd(20)
+    local y=cy-h/2+rnd(12)
     logs[i]=create_log(x,y,w,h)
   end
   for i=0,2 do
     hots[i]=create_hot()
   end
+  for i=0,1 do
+    licks[i]=create_lick()
+  end
 end
 
 function _update()
   update_hots()
+  update_licks()
 end
 
 function _draw()
   cls()
   for log in all(logs) do
     draw_log(log)
+  end
+  for lick in all(licks) do
+    draw_lick(lick)
   end
 end
 
@@ -56,6 +67,12 @@ function create_hot()
   return hot
 end
 
+function create_lick()
+  lick={}
+  randomize_lick(lick)
+  return lick
+end
+
 function update_hots()
   for hot in all(hots) do
     hot.y-=0.5
@@ -69,11 +86,50 @@ function update_hots()
   end
 end
 
+function update_licks()
+  for lick in all(licks) do
+    lick.d+=0.05
+    lick.t+=0.03
+    if lick.d < 1 then
+      lick.w=lick.d*lick.girth
+      lick.h=lick.d*lick.length
+      lick.oy=0
+    end
+    if lick.d >=1 and lick.d < 3 then
+      local s=1-cos((lick.d-1)/2)
+      lick.w=lick.girth*(1+s)
+      lick.h=lick.length*lick.d
+      lick.oy=0
+    end
+    if lick.d >=3 then
+      lick.w=lick.girth*((5-lick.d)/2)
+      lick.h=lick.length*3*((5-lick.d)/2)
+      lick.oy=lick.length*3*(lick.d-3)/2
+    end
+    local s=sin(lick.t)
+    if lick.d>5 	then
+      randomize_lick(lick)
+    end
+  end
+end
+
 function randomize_hot(hot)
   hot.x=rnd(80)+20
   hot.y=64+rnd(128)
   hot.t=rnd(500)/500
   hot.heat=500
+end
+
+function randomize_lick(lick)
+  lick.d=0
+  lick.w=0
+  lick.h=0
+  lick.oy=0
+  lick.x=cx-w/2+rnd(w)
+  lick.y=cy-h/2+rnd(h)
+  lick.t=rnd(500)/500
+  lick.girth=(30+rnd(15))/10
+  lick.length=(20+rnd(40))/10
 end
 
 col_table={5,  4,  8,  9, 10,7}
@@ -88,6 +144,15 @@ function get_heat(x,y)
     heat+=hot.heat*128/d2
   end
   return heat
+end
+
+function draw_lick(lick)
+  local x, y
+  x=lick.x-lick.w/2
+  y=lick.y-lick.h-lick.oy
+  rectfill(x,y,
+           x+lick.w,y+lick.h,
+           9)
 end
 
 function draw_log(log)
@@ -295,7 +360,7 @@ __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100011666030650267502675026750267502675026750267502675026750267502675026750267502675026750267502675026750267502675026750277502775027750277502775027750277502775027750
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
