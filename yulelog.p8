@@ -6,6 +6,7 @@ cx=52
 cy=96
 w=60
 h=20
+m=20
 
 logs={}
 hots={}
@@ -20,7 +21,7 @@ function _init()
   for i=0,2 do
     hots[i]=create_hot()
   end
-  for i=0,1 do
+  for i=0,10 do
     licks[i]=create_lick()
   end
 end
@@ -46,7 +47,7 @@ function create_log(x,y,w,h)
   log.y=y
   log.w=w
   log.h=h
-  
+
   log.shoots={}
   local weight=0
   local error,shoot
@@ -57,7 +58,7 @@ function create_log(x,y,w,h)
     shoot.weight=weight
     log.shoots[i]=shoot
   end
-  
+
   return log
 end
 
@@ -88,7 +89,7 @@ end
 
 function update_licks()
   for lick in all(licks) do
-    lick.d+=0.05
+    lick.d+=0.05*lick.speed
     lick.t+=0.03
     if lick.d < 1 then
       lick.w=lick.d*lick.girth
@@ -107,7 +108,7 @@ function update_licks()
       lick.oy=lick.length*3*(lick.d-3)/2
     end
     local s=sin(lick.t)
-    if lick.d>5 	then
+    if lick.d>5 then
       randomize_lick(lick)
     end
   end
@@ -125,10 +126,11 @@ function randomize_lick(lick)
   lick.w=0
   lick.h=0
   lick.oy=0
-  lick.x=cx-w/2+rnd(w)
-  lick.y=cy-h/2+rnd(h)
+  lick.speed=(200+rnd(100))/100
+  lick.x=cx-m+rnd(w+m/2)
+  lick.y=cy-m/4+rnd(m)
   lick.t=rnd(500)/500
-  lick.girth=(30+rnd(15))/10
+  lick.girth=(20+rnd(10))/10
   lick.length=(20+rnd(40))/10
 end
 
@@ -160,8 +162,6 @@ function draw_log(log)
            log.x+log.w,
            log.y+log.h,
            5)
-  local max=0
-  local min=999999999999
   local heat=0
   for i=0,log.h do
     local shoot=log.shoots[i]
@@ -174,14 +174,10 @@ function draw_log(log)
         heat=get_heat(x,y)
       end
       w=heat+shoot.weight
-      if heat > max then max=heat end
-      if heat < min then min=heat end
       col=col_lookup(w)
       line(x,y,x+3,y,col)
     end
   end
-  print(min,10,7,10)
-  print(max,74,7,10)
 end
 
 function col_lookup(w)
