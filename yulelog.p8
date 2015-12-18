@@ -3,20 +3,23 @@ version 5
 __lua__
 
 log=0
+hots={}
 
 function _init()
   log=create_log(40,80,60,20)
+  for i=0,2 do
+    hots[i]=create_hot()
+  end
 end
 
 function _update()
-
+  update_hots()
 end
 
 function _draw()
   cls()
   draw_log(log)
 end
-
 
 function create_log(x,y,w,h)
   log = {}
@@ -39,8 +42,45 @@ function create_log(x,y,w,h)
   return log
 end
 
+function create_hot()
+  hot={}
+  randomize_hot(hot)
+  return hot
+end
+
+function update_hots()
+  for hot in all(hots) do
+    hot.y-=0.5
+    hot.t+=0.01
+    local s=sin(hot.t)
+    hot.x+=s
+    hot.heat+=s
+    if hot.y < 64 then
+      randomize_hot(hot)
+    end
+  end
+end
+
+function randomize_hot(hot)
+  hot.x=rnd(80)+20
+  hot.y=64+rnd(128)
+  hot.t=rnd(500)/500
+  hot.heat=500
+end
+
 col_table={5,  4,  8,  9, 10,7}
 col_thrsh={0,200,300,350,375}
+
+function get_heat(x,y)
+  local heat=0
+  for hot in all(hots) do
+    local dx=hot.x-x
+    local dy=hot.y-y
+    local d2=sqrt(dx*dx+dy*dy)
+    heat+=hot.heat*128/d2
+  end
+  return heat
+end
 
 function draw_log(log)
   rectfill(log.x,log.y,
@@ -48,21 +88,38 @@ function draw_log(log)
            log.y+log.h,
            5)
   local max=0
+  local min=999999999999
+  local heat=0
   for i=0,log.h do
     local shoot=log.shoots[i]
     local y=log.y+i
-    local col=0
-    for j,val in pairs(col_table) do
-      local thresh=col_thrsh[j]
-      col=val
-      if thresh == nil then break end
-      if thresh>shoot.weight then break end
+    for j=0,log.w/3 do
+      local x=log.x+j*3
+      local w=0
+      local col=0
+      if j%3 == 0 then
+        heat=get_heat(x,y)
+      end
+      w=heat+shoot.weight
+      if heat > max then max=heat end
+      if heat < min then min=heat end
+      col=col_lookup(w)
+      line(x,y,x+3,y,col)
     end
-    line(log.x,y,
-         log.x+log.w,y,col)
-    if shoot.weight>max then max=shoot.weight end
   end
-  print(max, 10, 10,10)
+  print(min,10,7,10)
+  print(max,74,7,10)
+end
+
+function col_lookup(w)
+  local col
+  for j,val in pairs(col_table) do
+    local thresh=col_thrsh[j]
+    col=val
+    if thresh == nil then break end
+    if thresh>w then break end
+  end
+  return col
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
