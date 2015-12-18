@@ -2,11 +2,17 @@ pico-8 cartridge // http://www.pico-8.com
 version 5
 __lua__
 
-log=0
+logs={}
 hots={}
 
 function _init()
-  log=create_log(40,80,60,20)
+  local w=60
+  local h=20
+  for i=0,3 do
+    local x=20+rnd(20)
+    local y=80+rnd(12)
+    logs[i]=create_log(x,y,w,h)
+  end
   for i=0,2 do
     hots[i]=create_hot()
   end
@@ -18,7 +24,9 @@ end
 
 function _draw()
   cls()
-  draw_log(log)
+  for log in all(logs) do
+    draw_log(log)
+  end
 end
 
 function create_log(x,y,w,h)
