@@ -1,7 +1,6 @@
 pico-8 cartridge // http://www.pico-8.com
 version 5
 __lua__
-
 cx=52
 cy=96
 w=60
@@ -12,6 +11,8 @@ logs={}
 hots={}
 licks={}
 disp={}
+idle_count=0
+lick_count=60
 
 function _init()
   local off=rnd(100)/100
@@ -23,8 +24,12 @@ function _init()
   for i=0,2 do
     hots[i]=create_hot()
   end
-  for i=0,40 do
+  for i=0,lick_count do
     licks[i]=create_lick()
+    if i>lick_count/2 then
+      licks[i].is_idle=1
+      idle_count+=1
+    end
   end
   for j=0,31 do
     local row={}
@@ -150,12 +155,18 @@ function update_licks()
 end
 
 function drift_lick(lick)
+  if lick.is_idle==1 then
+    return
+  end
   cell=get_disp(lick.x,lick.y)
   lick.x+=cell.x/10
   lick.y+=cell.y/10
 end
 
 function progress_lick(lick)
+  if lick.is_idle==1 then
+    return
+  end
   lick.d+=0.05*lick.speed
   lick.t+=0.03
   if lick.d < 1 then
@@ -176,7 +187,7 @@ function progress_lick(lick)
   end
   local s=sin(lick.t)
   if lick.d>5 then
-    randomize_lick(lick)
+    pool_lick(lick)
   end
 end
 
@@ -187,11 +198,48 @@ function randomize_hot(hot)
   hot.heat=500
 end
 
+function pool_lick(lick)
+  local s=rnd(100)
+  local hi=95
+  local lo=5
+  if s<=lo then
+    release_idle_licks(1)
+  end
+  if s>lo and s<=hi then
+    randomize_lick(lick)
+  end
+  if s>hi then
+    lick.is_idle=1
+    idle_count+=1
+  end
+
+  if idle_count==lick_count then
+    release_idle_licks(lick_count/4)
+  end
+end
+
+function release_idle_licks(count)
+  local released_count=0
+  for lick in all(licks) do
+    if lick.is_idle==1 then
+      randomize_lick(lick)
+      lick.is_idle=0
+      idle_count-=1
+      released_count+=1
+
+      if released_count==count then
+        break
+      end
+    end
+  end
+end
+
 function randomize_lick(lick)
   lick.d=0
   lick.w=0
   lick.h=0
   lick.oy=0
+  lick.is_idle=0
   lick.speed=(200+rnd(100))/100
   lick.x=cx-m+rnd(w+m/2)-2
   lick.y=cy-m/4+rnd(m)
@@ -220,6 +268,9 @@ end
 
 function draw_lick(lick)
   local x, y,col
+  if lick.is_idle==1 then
+    return
+  end
   col=col_lookup(lick.d,lick_table,lick_thrsh)
   x=lick.x-lick.w/2
   y=lick.y-lick.h-lick.oy
