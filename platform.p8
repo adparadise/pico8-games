@@ -20,6 +20,8 @@ MIN_FRICTION_SPEED = 0.4
 AIR_ACCEL = 0.7
 AIR_FRICTION = 0.8
 
+SOLID_GROUND = 1
+
 t = 0
 players = {}
 function _init()
@@ -198,7 +200,7 @@ function update_player_common_kinetics(player, next)
     xflags = fget(mget(ncx, cy))
   end
 
-  if (band(xflags,1) > 0) then
+  if (band(xflags, SOLID_GROUND) > 0) then
     if (dx < 0) then
       next.x = (ncx+1)*8+player.w/2
       player.vx = 0
@@ -258,7 +260,7 @@ function update_player_airborne_kinetics(player, next)
     yflags = bor(lflags, rflags)
   end
 
-  if (band(yflags,1) > 0) then
+  if (band(yflags, SOLID_GROUND) > 0) then
     if (dy < 0) then
       next.y = (ncy+1)*8+player.h/2
       player.vy = 0
@@ -273,7 +275,29 @@ function update_player_airborne_kinetics(player, next)
 end
 
 function update_player_standing_kinetics(player, next)
-  
+  local dx = player.vx
+  local cy
+  local nxr
+  local nxl
+  local lflags
+  local rflags
+  local flags
+
+  cy = flr((player.y + player.h/2 + 1)/8)
+  nxr = flr((next.x + player.w/2 + 1)/8)
+  nxl = flr((next.x - player.w/2)/8)
+
+  lflags = fget(mget(nxr, cy))
+  rflags = fget(mget(nxl, cy))
+
+  player.cells[#player.cells + 1] = {x = nxr, y = cy}
+  player.cells[#player.cells + 1] = {x = nxl, y = cy}
+
+  flags = bor(lflags, rflags)
+
+  if (band(flags, SOLID_GROUND) == 0) then
+    player.state = AIRBORNE
+  end
 end
 
 function draw_level()
@@ -281,8 +305,8 @@ function draw_level()
 end
 
 function draw_player(player)
+  -- draw_player_debug(player)
   spr(7,player.x-4,player.y-4)
-  draw_player_debug(player)
 end
 
 function draw_player_debug(player)
@@ -290,7 +314,7 @@ function draw_player_debug(player)
   print(player.y)
   print(player.yflags)
   for cell in all(player.cells) do
-    rect(cell.x*8, cell.y*8, cell.x*8 + 7, cell.y*8 + 7, 6)
+    rect(cell.x*8, cell.y*8, cell.x*8 + 7, cell.y*8 + 7, 3)
   end
 end
 __gfx__
