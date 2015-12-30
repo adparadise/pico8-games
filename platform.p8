@@ -188,29 +188,60 @@ function update_player_kinetics(player)
   local ccy = flr(player.y/8)
   local nflagsy = fget(mget(ccx,ncy))
   local nflagsx = fget(mget(ncx,ccy))
+  local nflagsxy = fget(mget(ncx,ncy))
 
-  if (band(nflagsy,1)>0) then
+  local any_hits = false
+  if (band(nflagsy,1) > 0) then
     player.code = 2
     if (dy < 0) then
       ny = (ncy+1)*8+player.h/2
       player.vy = 0
+      any_hits = true
     end
     if (dy > 0) then
       ny = ncy*8-player.h/2
       player.vy = 0
       player.state = STANDING
       player.jump_direction = 0
+      any_hits = true
     end
   end
 
-  if (band(nflagsx,1)>0) then
+  if (band(nflagsx,1) > 0) then
     if (dx < 0) then
       nx = (ncx+1)*8+player.w/2
       player.vx = 0
+      any_hits = true
     end
     if (dx > 0) then
       nx = ncx*8-player.w/2
       player.vx = 0
+      any_hits = true
+    end
+  end
+
+  if (not any_hits and band(nflagsxy,1) > 0) then
+    if (dy < 0) then
+      ny = (ncy+1)*8+player.h/2
+      player.vy = 0
+      any_hits = true
+    end
+    if (dy > 0) then
+      ny = ncy*8-player.h/2
+      player.vy = 0
+      player.state = STANDING
+      player.jump_direction = 0
+      any_hits = true
+    end
+    if (dx < 0) then
+      nx = (ncx+1)*8+player.w/2
+      player.vx = 0
+      any_hits = true
+    end
+    if (dx > 0) then
+      nx = ncx*8-player.w/2
+      player.vx = 0
+      any_hits = true
     end
   end
 
@@ -303,7 +334,7 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000p
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
