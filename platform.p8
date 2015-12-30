@@ -5,17 +5,23 @@ STANDING = 1
 AIRBORNE = 2
 JUMPING = 3
 
-JUMP_BUTTON=2
+LEFT_BUTTON = 0
+RIGHT_BUTTON = 1
+JUMP_BUTTON = 2
 
 JUMP_TIME = 10
 MAX_TIME = 20000
+MAX_RUN_SPEED = 4
+RUN_ACCEL = 1
+GRAVITY_ACCEL = 0.8
+FRICTION = 0.5
 
 t = 0
 players = {}
 function _init()
   t = 0
-  for i=0,1 do
-    players[i]=create_player(0,50,50)
+  for i = 0,1 do
+    players[i] = create_player(0,50,50)
   end
 end
 
@@ -35,16 +41,18 @@ function _draw()
 end
 
 function create_player(input,x,y)
-  local player={}
-  player.input=input
-  player.x=x
-  player.y=y
-  player.w=6
-  player.h=8
-  player.vy=-3
-  player.state=AIRBORNE
-  player.jump_until=0
-  player.jump_released=true
+  local player = {}
+  player.input = input
+  player.x = x
+  player.y = y
+  player.w = 6
+  player.h = 8
+  player.ax = 0
+  player.vy = -3
+  player.vx = 0
+  player.state = AIRBORNE
+  player.jump_until = 0
+  player.jump_released = true
   return player
 end
 
@@ -56,7 +64,7 @@ function update_time()
       player.jump_until -= MAX_TIME
     end
   end
-  t+=1
+  t += 1
 end
 
 function update_player(player)
@@ -66,10 +74,20 @@ function update_player(player)
 end
 
 function update_player_inputs(player)
-  if (player.state == STANDING and btn(2, player.input) and player.jump_released) then
+  if (player.state == STANDING and btn(LEFT_BUTTON, player.input)) then
+    player.ax = -RUN_ACCEL
+  end
+  if (player.state == STANDING and btn(RIGHT_BUTTON, player.input)) then
+    player.ax = RUN_ACCEL
+  end
+  if (player.state == STANDING and not btn(RIGHT_BUTTON, player.input) and not btn(LEFT_BUTTON, player.input)) then
+    player.ax = 0
+  end
+
+  if (player.state == STANDING and btn(JUMP_BUTTON, player.input) and player.jump_released) then
     player.state = JUMPING
     player.jump_until = t + JUMP_TIME
-    player.vy=-4
+    player.vy =- 4
     player.jump_released = false
   end
   if (player.jump_released == false and not btn(JUMP_BUTTON, player.input)) then
@@ -85,48 +103,88 @@ function update_player_inputs(player)
 end
 
 function update_player_forces(player)
+  if (player.state == STANDING and player.ax == 0) then
+    player.vx -= player.vx * FRICTION
+  end
   if (player.state == AIRBORNE and player.vy < 3) then
-    player.vy+=0.8
+    player.vy += GRAVITY_ACCEL
+  end
+  player.vx += player.ax
+  if (player.vx > MAX_RUN_SPEED) then
+    player.vx = MAX_RUN_SPEED
+  end
+  if (player.vx < -MAX_RUN_SPEED) then
+    player.vx = -MAX_RUN_SPEED
   end
 end
 
 function update_player_kinetics(player)
-  player.code=0
-  local ny=player.y+player.vy
-  local nty=ny
-  local dy=0
+  player.code = 0
+  local ny = player.y + player.vy
+  local nx = player.x + player.vx
+  local nty = ny
+  local ntx = nx
+  local dy = 0
+  local dx = 0
+  if (player.vx > 0) then
+    dx = 1
+  end
+  if (player.vx < 0) then
+    dx =- 1
+  end
   if (player.vy > 0) then
-    dy=1
+    dy = 1
   end
   if (player.vy < 0) then
-    dy=-1
+    dy =- 1
+  end
+  if (dx > 0) then
+    ntx += player.w/2
+  end
+  if (dx < 0) then
+    ntx -= (player.w/2+1)
   end
   if (dy > 0) then
-    nty+=player.h/2
+    nty += player.h/2
   end
   if (dy < 0) then
-    nty-=(player.h/2+1)
+    nty -= (player.h/2+1)
   end
-  player.nty=nty
+  player.nty = nty
 
-  local ncy=flr(nty/8)
-  local ncx=flr(player.x/8)
-  local nflagsy=fget(mget(ncx,ncy))
+  local ncy = flr(nty/8)
+  local ncx = flr(ntx/8)
+  local ccx = flr(player.x/8)
+  local ccy = flr(player.y/8)
+  local nflagsy = fget(mget(ccx,ncy))
+  local nflagsx = fget(mget(ncx,ccy))
 
   if (band(nflagsy,1)>0) then
     player.code = 2
     if (dy < 0) then
-      ny=(ncy+1)*8+player.h/2
-      player.vy=0
+      ny = (ncy+1)*8+player.h/2
+      player.vy = 0
     end
     if (dy > 0) then
-      ny=ncy*8-player.h/2
-      player.vy=0
-      player.state=STANDING
+      ny = ncy*8-player.h/2
+      player.vy = 0
+      player.state = STANDING
     end
   end
 
-  player.y=ny
+  if (band(nflagsx,1)>0) then
+    if (dx < 0) then
+      nx = (ncx+1)*8+player.w/2
+      player.vx = 0
+    end
+    if (dx > 0) then
+      nx = ncx*8-player.w/2
+      player.vx = 0
+    end
+  end
+
+  player.y = ny
+  player.x = nx
 end
 
 function draw_level()
