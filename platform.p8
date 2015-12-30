@@ -145,32 +145,80 @@ function update_player_forces(player)
 end
 
 function update_player_kinetics(player)
-  player.code = 0
   if (player.vx > -MIN_FRICTION_SPEED and player.vx < MIN_FRICTION_SPEED) then
     player.vx = 0
     player.x = flr(player.x)
   end
-  local ny = player.y + player.vy
-  local nx = player.x + player.vx
-  local dy = 0
+
+  local next = {x = player.x + player.vx, y = player.y + player.vy}
+  player.cells = {}
+
+  update_player_common_kinetics(player, next)
+  if (player.state == AIRBORNE or player.state == JUMPING) then
+    update_player_airborne_kinetics(player, next)
+  end
+  if (player.state == STANDING) then
+    update_player_standing_kinetics(player, next)
+  end
+
+  player.y = next.y
+  player.x = next.x
+end
+
+function update_player_common_kinetics(player, next)
+  local ncx = 0
   local dx = 0
-  local yflags = 0
   local xflags = 0
-  local xandflags = 0
+
   if (player.vx > 0) then
     dx = 1
   end
   if (player.vx < 0) then
     dx =- 1
   end
+
+  if (dx > 0) then
+    local cy
+
+    ncx = flr((next.x + player.w/2)/8)
+    cy = flr(player.y/8)
+
+    player.cells[#player.cells + 1] = {x = ncx, y = cy}
+
+    xflags = fget(mget(ncx, cy))
+  end
+  if (dx < 0) then
+    local cy
+
+    ncx = flr((next.x - player.w/2)/8)
+    cy = flr(player.y/8)
+
+    player.cells[#player.cells + 1] = {x = ncx, y = cy}
+
+    xflags = fget(mget(ncx, cy))
+  end
+
+  if (band(xflags,1) > 0) then
+    if (dx < 0) then
+      next.x = (ncx+1)*8+player.w/2
+      player.vx = 0
+    end
+    if (dx > 0) then
+      next.x = ncx*8-player.w/2
+      player.vx = 0
+    end
+  end
+end
+
+function update_player_airborne_kinetics(player, next)
+  local dy = 0
+  local yflags = 0
   if (player.vy > 0) then
     dy = 1
   end
   if (player.vy < 0) then
     dy =- 1
   end
-
-  player.cells = {}
 
   local ncy = 0
   if (dy > 0) then
@@ -179,7 +227,7 @@ function update_player_kinetics(player)
     local lflags
     local rflags
 
-    ncy = flr((ny + player.h/2)/8)
+    ncy = flr((next.y + player.h/2)/8)
     cx1 = flr((player.x-player.w/2+1)/8)
     cx2 = flr((player.x+player.w/2-1)/8)
 
@@ -197,7 +245,7 @@ function update_player_kinetics(player)
     local lflags
     local rflags
 
-    ncy = flr((ny - player.h/2)/8)
+    ncy = flr((next.y - player.h/2)/8)
     cx1 = flr((player.x-player.w/2+1)/8)
     cx2 = flr((player.x+player.w/2-1)/8)
 
@@ -208,60 +256,24 @@ function update_player_kinetics(player)
     player.cells[#player.cells + 1] = {x = cx2, y = ncy}
 
     yflags = bor(lflags, rflags)
- end
-
-  local ncx = 0
-  if (dx > 0) then
-    local cy
-
-    ncx = flr((nx + player.w/2)/8)
-    cy = flr(player.y/8)
-
-    player.cells[#player.cells + 1] = {x = ncx, y = cy}
-
-    xflags = fget(mget(ncx, cy))
-  end
-  if (dx < 0) then
-    local cy
-
-    ncx = flr((nx - player.w/2)/8)
-    cy = flr(player.y/8)
-
-    player.cells[#player.cells + 1] = {x = ncx, y = cy}
-
-    xflags = fget(mget(ncx, cy))
   end
 
-  local any_hits = false
   if (band(yflags,1) > 0) then
     if (dy < 0) then
-      ny = (ncy+1)*8+player.h/2
+      next.y = (ncy+1)*8+player.h/2
       player.vy = 0
-      any_hits = true
     end
     if (dy > 0) then
-      ny = ncy*8-player.h/2
+      next.y = ncy*8-player.h/2
       player.vy = 0
       player.state = STANDING
       player.jump_direction = 0
-      any_hits = true
     end
   end
+end
 
-  if (band(xflags,1) > 0) then
-    if (dx < 0) then
-      nx = (ncx+1)*8+player.w/2
-      player.vx = 0
-      any_hits = true
-    end
-    if (dx > 0) then
-      nx = ncx*8-player.w/2
-      player.vx = 0
-      any_hits = true
-    end
-  end
-  player.y = ny
-  player.x = nx
+function update_player_standing_kinetics(player, next)
+  
 end
 
 function draw_level()
