@@ -25,7 +25,7 @@ players = {}
 function _init()
   t = 0
   for i = 0,1 do
-    players[i] = create_player(0,50,50)
+    players[i] = create_player(0,33,92)
   end
 end
 
@@ -52,7 +52,7 @@ function create_player(input,x,y)
   player.w = 6
   player.h = 8
   player.ax = 0
-  player.vy = -3
+  player.vy = 0
   player.vx = 0
   player.state = AIRBORNE
   player.jump_until = 0
@@ -255,10 +255,13 @@ end
 
 function draw_player(player)
   spr(7,player.x-4,player.y-4)
+  draw_player_debug(player)
 end
 
 function draw_player_debug(player)
-  print(player.jump_direction)
+  print(player.x)
+  print(", ")
+  print(player.y)
 end
 __gfx__
 00000000000000067777750000000000000000000000000000000000033333300000000000000000000000000000000000000000000000000000000000000000
