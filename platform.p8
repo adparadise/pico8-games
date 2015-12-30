@@ -25,7 +25,7 @@ players = {}
 function _init()
   t = 0
   for i = 0,1 do
-    players[i] = create_player(0,33,92)
+    players[i] = create_player(0,33,88)
   end
 end
 
@@ -152,10 +152,11 @@ function update_player_kinetics(player)
   end
   local ny = player.y + player.vy
   local nx = player.x + player.vx
-  local nty = ny
-  local ntx = nx
   local dy = 0
   local dx = 0
+  local yflags = 0
+  local xflags = 0
+  local xandflags = 0
   if (player.vx > 0) then
     dx = 1
   end
@@ -168,31 +169,33 @@ function update_player_kinetics(player)
   if (player.vy < 0) then
     dy =- 1
   end
-  if (dx > 0) then
-    ntx += player.w/2
-  end
-  if (dx < 0) then
-    ntx -= (player.w/2+1)
-  end
+
+  local ncy = 0
   if (dy > 0) then
-    nty += player.h/2
+    ncy = flr((ny + player.h/2)/8)
+    local lflags = fget(mget(flr((player.x-player.w/2+1)/8), ncy))
+    local rflags = fget(mget(flr((player.x+player.w/2-1)/8), ncy))
+    yflags = bor(lflags, rflags)
   end
   if (dy < 0) then
-    nty -= (player.h/2+1)
+    ncy = flr((ny - player.h/2)/8)
+    local lflags = fget(mget(flr((player.x-player.w/2+1)/8), ncy))
+    local rflags = fget(mget(flr((player.x+player.w/2-1)/8), ncy))
+    yflags = bor(lflags, rflags)
   end
-  player.nty = nty
 
-  local ncy = flr(nty/8)
-  local ncx = flr(ntx/8)
-  local ccx = flr(player.x/8)
-  local ccy = flr(player.y/8)
-  local nflagsy = fget(mget(ccx,ncy))
-  local nflagsx = fget(mget(ncx,ccy))
-  local nflagsxy = fget(mget(ncx,ncy))
+  local ncx = 0
+  if (dx > 0) then
+    ncx = flr((nx + player.w/2)/8)
+    xflags = fget(mget(ncx, flr(player.y/8)))
+  end
+  if (dx < 0) then
+    ncx = flr((nx - player.w/2)/8)
+    xflags = fget(mget(ncx, flr(player.y/8)))
+  end
 
   local any_hits = false
-  if (band(nflagsy,1) > 0) then
-    player.code = 2
+  if (band(yflags,1) > 0) then
     if (dy < 0) then
       ny = (ncy+1)*8+player.h/2
       player.vy = 0
@@ -207,7 +210,7 @@ function update_player_kinetics(player)
     end
   end
 
-  if (band(nflagsx,1) > 0) then
+  if (band(xflags,1) > 0) then
     if (dx < 0) then
       nx = (ncx+1)*8+player.w/2
       player.vx = 0
@@ -219,32 +222,6 @@ function update_player_kinetics(player)
       any_hits = true
     end
   end
-
-  if (not any_hits and band(nflagsxy,1) > 0) then
-    if (dy < 0) then
-      ny = (ncy+1)*8+player.h/2
-      player.vy = 0
-      any_hits = true
-    end
-    if (dy > 0) then
-      ny = ncy*8-player.h/2
-      player.vy = 0
-      player.state = STANDING
-      player.jump_direction = 0
-      any_hits = true
-    end
-    if (dx < 0) then
-      nx = (ncx+1)*8+player.w/2
-      player.vx = 0
-      any_hits = true
-    end
-    if (dx > 0) then
-      nx = ncx*8-player.w/2
-      player.vx = 0
-      any_hits = true
-    end
-  end
-
   player.y = ny
   player.x = nx
 end
@@ -260,8 +237,8 @@ end
 
 function draw_player_debug(player)
   print(player.x)
-  print(", ")
   print(player.y)
+  print(player.yflags)
 end
 __gfx__
 00000000000000067777750000000000000000000000000000000000033333300000000000000000000000000000000000000000000000000000000000000000
