@@ -170,28 +170,66 @@ function update_player_kinetics(player)
     dy =- 1
   end
 
+  player.cells = {}
+
   local ncy = 0
   if (dy > 0) then
+    local cx1
+    local cx2
+    local lflags
+    local rflags
+
     ncy = flr((ny + player.h/2)/8)
-    local lflags = fget(mget(flr((player.x-player.w/2+1)/8), ncy))
-    local rflags = fget(mget(flr((player.x+player.w/2-1)/8), ncy))
+    cx1 = flr((player.x-player.w/2+1)/8)
+    cx2 = flr((player.x+player.w/2-1)/8)
+
+    lflags = fget(mget(cx1, ncy))
+    rflags = fget(mget(cx2, ncy))
+
+    player.cells[#player.cells + 1] = {x = cx1, y = ncy}
+    player.cells[#player.cells + 1] = {x = cx2, y = ncy}
+
     yflags = bor(lflags, rflags)
   end
   if (dy < 0) then
+    local cx1
+    local cx2
+    local lflags
+    local rflags
+
     ncy = flr((ny - player.h/2)/8)
-    local lflags = fget(mget(flr((player.x-player.w/2+1)/8), ncy))
-    local rflags = fget(mget(flr((player.x+player.w/2-1)/8), ncy))
+    cx1 = flr((player.x-player.w/2+1)/8)
+    cx2 = flr((player.x+player.w/2-1)/8)
+
+    lflags = fget(mget(cx1, ncy))
+    rflags = fget(mget(cx2, ncy))
+
+    player.cells[#player.cells + 1] = {x = cx1, y = ncy}
+    player.cells[#player.cells + 1] = {x = cx2, y = ncy}
+
     yflags = bor(lflags, rflags)
-  end
+ end
 
   local ncx = 0
   if (dx > 0) then
+    local cy
+
     ncx = flr((nx + player.w/2)/8)
-    xflags = fget(mget(ncx, flr(player.y/8)))
+    cy = flr(player.y/8)
+
+    player.cells[#player.cells + 1] = {x = ncx, y = cy}
+
+    xflags = fget(mget(ncx, cy))
   end
   if (dx < 0) then
+    local cy
+
     ncx = flr((nx - player.w/2)/8)
-    xflags = fget(mget(ncx, flr(player.y/8)))
+    cy = flr(player.y/8)
+
+    player.cells[#player.cells + 1] = {x = ncx, y = cy}
+
+    xflags = fget(mget(ncx, cy))
   end
 
   local any_hits = false
@@ -239,6 +277,9 @@ function draw_player_debug(player)
   print(player.x)
   print(player.y)
   print(player.yflags)
+  for cell in all(player.cells) do
+    rect(cell.x*8, cell.y*8, cell.x*8 + 7, cell.y*8 + 7, 6)
+  end
 end
 __gfx__
 00000000000000067777750000000000000000000000000000000000033333300000000000000000000000000000000000000000000000000000000000000000
@@ -314,7 +355,7 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000p
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
