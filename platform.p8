@@ -25,8 +25,9 @@ SOLID_GROUND = 1
 t = 0
 players = {}
 is_running = true
-is_replaying = true
-replay_only = 6
+is_replaying = false
+replay_only = nil
+show_debug = false
 replay_inputs = {}
 replay_inputs_index = 1
 replay_inputs_index_t = 0
@@ -73,6 +74,25 @@ replays[6] = { x = 71, y = 116, inputs = {
    {b=bor(LEFT_BUTTON),d=7},
    {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=5},
    {b=0,d=5} }
+}
+-- upward: through bottom left, harder, stop at error
+replays[7] = { x = 71, y = 116, inputs = {
+   {b=bor(LEFT_BUTTON),d=7},
+   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=2},
+   {b=0,d=0} }
+}
+-- downward: long jump
+replays[8] = { x = 105, y = 69, inputs = {
+   {b=bor(LEFT_BUTTON),d=3},
+   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=20},
+   {b=0,d=5},
+   {b=0,d=5} }
+}
+-- downward: long jump, paused
+replays[8] = { x = 105, y = 69, inputs = {
+   {b=bor(LEFT_BUTTON),d=3},
+   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=17},
+   {b=0,d=0} }
 }
 
 function _init()
@@ -336,21 +356,31 @@ function update_player_common_kinetics(player, next)
     local cy
 
     next.cellx = flr((next.x + player.w/2)/8)
-    cy = flr(player.y/8)
+    cy1 = flr((player.y-player.h/3)/8)
+    cy2 = flr((player.y+player.h/3)/8)
 
-    player.cells[#player.cells + 1] = {x = next.cellx, y = cy}
+    tflags = fget(mget(next.cellx, cy1))
+    bflags = fget(mget(next.cellx, cy2))
 
-    xflags = fget(mget(next.cellx, cy))
+    player.cells[#player.cells + 1] = {x = next.cellx, y = cy1}
+    player.cells[#player.cells + 1] = {x = next.cellx, y = cy2}
+
+    xflags = bor(tflags, bflags)
   end
   if (dx < 0) then
     local cy
 
     next.cellx = flr((next.x - player.w/2)/8)
-    cy = flr(player.y/8)
+    cy1 = flr((player.y-player.h/3)/8)
+    cy2 = flr((player.y+player.h/3)/8)
 
-    player.cells[#player.cells + 1] = {x = next.cellx, y = cy}
+    tflags = fget(mget(next.cellx, cy1))
+    bflags = fget(mget(next.cellx, cy2))
 
-    xflags = fget(mget(next.cellx, cy))
+    player.cells[#player.cells + 1] = {x = next.cellx, y = cy1}
+    player.cells[#player.cells + 1] = {x = next.cellx, y = cy2}
+
+    xflags = bor(tflags, bflags)
   end
 
   if (band(xflags, SOLID_GROUND) > 0) then
@@ -459,7 +489,7 @@ function update_player_airborne_kinetics(player, next)
         player.vx = 0
         next.is_updated = true
       end
-      if (magy > magx) then
+      if (magx > magy) then
         if (player.vy < 0) then
           next.y = nexty
           player.vy = 0
@@ -509,7 +539,9 @@ function draw_level()
 end
 
 function draw_player(player)
-  --draw_player_debug(player)
+  if (show_debug) then
+    draw_player_debug(player)
+  end
   spr(7,player.x-4,player.y-4)
 end
 
