@@ -5,9 +5,9 @@ STANDING = 1
 AIRBORNE = 2
 JUMPING = 3
 
-LEFT_BUTTON = 0
-RIGHT_BUTTON = 1
-JUMP_BUTTON = 2
+LEFT_BUTTON = 1
+RIGHT_BUTTON = 2
+JUMP_BUTTON = 4
 
 JUMP_TIME = 3
 JUMP_SPEED = 6
@@ -24,7 +24,19 @@ SOLID_GROUND = 1
 
 t = 0
 players = {}
+
 function _init()
+  init_gameplay()
+end
+
+function init_gameplay()
+  t = 0
+  for i = 0,1 do
+    players[i] = create_player(0,33,88)
+  end
+end
+
+function init_replay()
   t = 0
   for i = 0,1 do
     players[i] = create_player(0,33,88)
@@ -32,10 +44,7 @@ function _init()
 end
 
 function _update()
-  update_time()
-  for player in all(players) do
-    update_player(player)
-  end
+  update()
 end
 
 function _draw()
@@ -43,6 +52,21 @@ function _draw()
   draw_level()
   for player in all(players) do
     draw_player(player)
+  end
+end
+
+function update()
+  update_time()
+  update_player_buttons()
+  for player in all(players) do
+    update_player(player)
+  end
+end
+
+function update_player_buttons()
+  local buttons = btn()
+  for player in all(players) do
+    player.buttons = band(shr(buttons, player.input * 8), 127)
   end
 end
 
@@ -80,17 +104,19 @@ function update_player(player)
 end
 
 function update_player_inputs(player)
-  if (player.state == STANDING and btn(LEFT_BUTTON, player.input)) then
-    player.ax = -RUN_ACCEL
-  end
-  if (player.state == STANDING and btn(RIGHT_BUTTON, player.input)) then
-    player.ax = RUN_ACCEL
-  end
-  if (player.state == STANDING and not btn(RIGHT_BUTTON, player.input) and not btn(LEFT_BUTTON, player.input)) then
-    player.ax = 0
+  if (player.state == STANDING) then
+    if (band(player.buttons, LEFT_BUTTON) > 0) then
+      player.ax = -RUN_ACCEL
+    end
+    if (band(player.buttons, RIGHT_BUTTON) > 0) then
+      player.ax = RUN_ACCEL
+    end
+    if (band(player.buttons, RIGHT_BUTTON) == 0 and band(player.buttons, LEFT_BUTTON) == 0) then
+      player.ax = 0
+    end
   end
 
-  if (player.state == STANDING and btn(JUMP_BUTTON, player.input) and player.jump_released) then
+  if (player.state == STANDING and band(player.buttons, JUMP_BUTTON) > 0 and player.jump_released) then
     player.state = JUMPING
     player.jump_until = t + JUMP_TIME
     player.vy =- JUMP_SPEED
@@ -103,10 +129,10 @@ function update_player_inputs(player)
       player.jump_direction = 1
     end
   end
-  if (player.jump_released == false and not btn(JUMP_BUTTON, player.input)) then
+  if (player.jump_released == false and band(player.buttons, JUMP_BUTTON) == 0) then
     player.jump_released = true
   end
-  if (player.state == JUMPING and not btn(JUMP_BUTTON, player.input)) then
+  if (player.state == JUMPING and band(player.buttons, JUMP_BUTTON) == 0) then
     player.state = AIRBORNE
   end
   if (player.state == JUMPING and t == player.jump_until) then
@@ -116,11 +142,11 @@ function update_player_inputs(player)
 
   if (player.state == JUMPING or player.state == AIRBORNE) then
     player.ax = 0
-    if (btn(LEFT_BUTTON, player.input)) then
+    if (band(player.buttons, LEFT_BUTTON) > 0) then
       player.ax = -AIR_ACCEL
       player.jump_direction = -1
     end
-    if (btn(RIGHT_BUTTON, player.input)) then
+    if (band(player.buttons, RIGHT_BUTTON) > 0) then
       player.ax = AIR_ACCEL
       player.jump_direction = 1
     end
@@ -358,14 +384,13 @@ function draw_level()
 end
 
 function draw_player(player)
-  -- draw_player_debug(player)
+  draw_player_debug(player)
   spr(7,player.x-4,player.y-4)
 end
 
 function draw_player_debug(player)
   print(player.x)
   print(player.y)
-  print(player.yflags)
   for cell in all(player.cells) do
     local col = 3
     if (cell.col != nil) then
