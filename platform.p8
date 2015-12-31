@@ -152,7 +152,11 @@ function update_player_kinetics(player)
     player.x = flr(player.x)
   end
 
-  local next = {x = player.x + player.vx, y = player.y + player.vy}
+  local next = {
+    x = player.x + player.vx,
+    y = player.y + player.vy,
+    is_updated = false
+  }
   player.cells = {}
 
   update_player_common_kinetics(player, next)
@@ -168,7 +172,6 @@ function update_player_kinetics(player)
 end
 
 function update_player_common_kinetics(player, next)
-  local ncx = 0
   local dx = 0
   local xflags = 0
 
@@ -182,32 +185,34 @@ function update_player_common_kinetics(player, next)
   if (dx > 0) then
     local cy
 
-    ncx = flr((next.x + player.w/2)/8)
+    next.cellx = flr((next.x + player.w/2)/8)
     cy = flr(player.y/8)
 
-    player.cells[#player.cells + 1] = {x = ncx, y = cy}
+    player.cells[#player.cells + 1] = {x = next.cellx, y = cy}
 
-    xflags = fget(mget(ncx, cy))
+    xflags = fget(mget(next.cellx, cy))
   end
   if (dx < 0) then
     local cy
 
-    ncx = flr((next.x - player.w/2)/8)
+    next.cellx = flr((next.x - player.w/2)/8)
     cy = flr(player.y/8)
 
-    player.cells[#player.cells + 1] = {x = ncx, y = cy}
+    player.cells[#player.cells + 1] = {x = next.cellx, y = cy}
 
-    xflags = fget(mget(ncx, cy))
+    xflags = fget(mget(next.cellx, cy))
   end
 
   if (band(xflags, SOLID_GROUND) > 0) then
     if (dx < 0) then
-      next.x = (ncx+1)*8+player.w/2
+      next.x = (next.cellx+1)*8+player.w/2
       player.vx = 0
+      next.is_updated = true
     end
     if (dx > 0) then
-      next.x = ncx*8-player.w/2
+      next.x = next.cellx*8-player.w/2
       player.vx = 0
+      next.is_updated = true
     end
   end
 end
@@ -222,22 +227,21 @@ function update_player_airborne_kinetics(player, next)
     dy =- 1
   end
 
-  local ncy = 0
   if (dy > 0) then
     local cx1
     local cx2
     local lflags
     local rflags
 
-    ncy = flr((next.y + player.h/2)/8)
+    next.celly = flr((next.y + player.h/2)/8)
     cx1 = flr((player.x-player.w/2+1)/8)
     cx2 = flr((player.x+player.w/2-1)/8)
 
-    lflags = fget(mget(cx1, ncy))
-    rflags = fget(mget(cx2, ncy))
+    lflags = fget(mget(cx1, next.celly))
+    rflags = fget(mget(cx2, next.celly))
 
-    player.cells[#player.cells + 1] = {x = cx1, y = ncy}
-    player.cells[#player.cells + 1] = {x = cx2, y = ncy}
+    player.cells[#player.cells + 1] = {x = cx1, y = next.celly}
+    player.cells[#player.cells + 1] = {x = cx2, y = next.celly}
 
     yflags = bor(lflags, rflags)
   end
@@ -247,29 +251,78 @@ function update_player_airborne_kinetics(player, next)
     local lflags
     local rflags
 
-    ncy = flr((next.y - player.h/2)/8)
+    next.celly = flr((next.y - player.h/2)/8)
     cx1 = flr((player.x-player.w/2+1)/8)
     cx2 = flr((player.x+player.w/2-1)/8)
 
-    lflags = fget(mget(cx1, ncy))
-    rflags = fget(mget(cx2, ncy))
+    lflags = fget(mget(cx1, next.celly))
+    rflags = fget(mget(cx2, next.celly))
 
-    player.cells[#player.cells + 1] = {x = cx1, y = ncy}
-    player.cells[#player.cells + 1] = {x = cx2, y = ncy}
+    player.cells[#player.cells + 1] = {x = cx1, y = next.celly}
+    player.cells[#player.cells + 1] = {x = cx2, y = next.celly}
 
     yflags = bor(lflags, rflags)
   end
 
   if (band(yflags, SOLID_GROUND) > 0) then
     if (dy < 0) then
-      next.y = (ncy+1)*8+player.h/2
+      next.y = (next.celly+1)*8+player.h/2
       player.vy = 0
+      next.is_updated = true
     end
     if (dy > 0) then
-      next.y = ncy*8-player.h/2
+      next.y = next.celly*8-player.h/2
       player.vy = 0
       player.state = STANDING
       player.jump_direction = 0
+      next.is_updated = true
+    end
+  end
+
+  if (not next.is_updated and next.cellx != nil and next.celly != nil) then
+    local flags = fget(mget(next.cellx, next.celly))
+    player.cells[#player.cells + 1] = {x = next.cellx, y = next.celly}
+    if (band(flags, SOLID_GROUND) > 0) then
+      local nextx = player.x
+      local nexty = player.y
+      if (player.vx < 0) then
+        nextx = (next.cellx)*8+player.w/2
+      end
+      if (player.vx > 0) then
+        nextx = next.cellx*8-player.w/2
+      end
+      if (player.vy < 0) then
+        nexty = (next.celly+1)*8+player.h/2
+      end
+      if (player.vy > 0) then
+        nexty = next.celly*8-player.h/2
+      end
+
+
+      local magx
+      local magy
+      magx = abs(player.x - nextx)
+      magy = abs(player.y - nexty)
+
+      if (magx < magy) then
+        next.x = nextx
+        player.vx = 0
+        next.is_updated = true
+      end
+      if (magy > magx) then
+        if (player.vy < 0) then
+          next.y = nexty
+          player.vy = 0
+          next.is_updated = true
+        end
+        if (player.vy > 0) then
+          next.y = nexty
+          player.vy = 0
+          player.state = STANDING
+          player.jump_direction = 0
+          next.is_updated = true
+        end
+      end
     end
   end
 end
@@ -314,7 +367,11 @@ function draw_player_debug(player)
   print(player.y)
   print(player.yflags)
   for cell in all(player.cells) do
-    rect(cell.x*8, cell.y*8, cell.x*8 + 7, cell.y*8 + 7, 3)
+    local col = 3
+    if (cell.col != nil) then
+      col = cell.col
+    end
+    rect(cell.x*8, cell.y*8, cell.x*8 + 7, cell.y*8 + 7, col)
   end
 end
 __gfx__
