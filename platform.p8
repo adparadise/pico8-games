@@ -24,9 +24,13 @@ SOLID_GROUND = 1
 
 t = 0
 players = {}
+is_replaying = false
+replay_inputs = {}
+replay_index = 1
+replay_index_t = 0
 
 function _init()
-  init_gameplay()
+  init_replay()
 end
 
 function init_gameplay()
@@ -39,12 +43,24 @@ end
 function init_replay()
   t = 0
   for i = 0,1 do
-    players[i] = create_player(0,33,88)
+    players[i] = create_player(0,60,114)
   end
+  replay_inputs = {
+    {b=bor(LEFT_BUTTON),d=5},
+    {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=5}
+  }
+  is_replaying = true
+  replay_index = 1
+  replay_index_t = 0
 end
 
 function _update()
-  update()
+  if (not is_replaying) then
+    update_gameplay()
+  end
+  if (is_replaying) then
+    update_replay()
+  end
 end
 
 function _draw()
@@ -55,9 +71,17 @@ function _draw()
   end
 end
 
-function update()
+function update_gameplay()
   update_time()
   update_player_buttons()
+  for player in all(players) do
+    update_player(player)
+  end
+end
+
+function update_replay()
+  update_time()
+  update_replay_buttons()
   for player in all(players) do
     update_player(player)
   end
@@ -68,6 +92,20 @@ function update_player_buttons()
   for player in all(players) do
     player.buttons = band(shr(buttons, player.input * 8), 127)
   end
+end
+
+function update_replay_buttons()
+  local buttons = 0
+  local replay = replay_inputs[replay_index]
+  if replay != nil then
+    buttons = replay.b
+    replay_index_t += 1
+    if (replay_index_t >= replay.d) then
+      replay_index += 1
+      replay_index_t = 0
+    end
+  end
+  players[1].buttons = buttons
 end
 
 function create_player(input,x,y)
