@@ -26,49 +26,54 @@ t = 0
 players = {}
 is_running = true
 is_replaying = true
+replay_only = 6
 replay_inputs = {}
 replay_inputs_index = 1
 replay_inputs_index_t = 0
 replay_index = 1
 lead_countdown = 3
 
-replays = {
--- 1. drop: through top right
-{ x = 35, y = 92, inputs = {
+replays = {}
+-- drop: through top right
+replays[1] = { x = 35, y = 92, inputs = {
    {b=RIGHT_BUTTON,d=3},
    {b=bor(RIGHT_BUTTON,JUMP_BUTTON),d=1},
    {b=RIGHT_BUTTON,d=3},
    {b=bor(LEFT_BUTTON),d=18},
-   {b=0,d=5} }
-},
--- 2. drop: into right side
-{ x = 37, y = 92, inputs = {
+   {b=0,d=0} }
+}
+-- drop: into right side
+replays[2] = { x = 37, y = 92, inputs = {
    {b=RIGHT_BUTTON,d=3},
    {b=bor(RIGHT_BUTTON,JUMP_BUTTON),d=1},
    {b=RIGHT_BUTTON,d=3},
    {b=bor(LEFT_BUTTON),d=18},
    {b=0,d=2} }
-},
--- 3. upward: through bottom left
-{ x = 51, y = 114, inputs = {
+}
+-- upward: through bottom left
+replays[3] = { x = 51, y = 114, inputs = {
    {b=bor(LEFT_BUTTON),d=3},
    {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=4},
    {b=0,d=5} }
-},
--- 4. walk: into left wall
-{ x = 18, y = 116, inputs = {
+}
+-- walk: into left wall
+replays[4] = { x = 18, y = 116, inputs = {
    {b=0,d=3},
    {b=bor(LEFT_BUTTON),d=8},
    {b=bor(LEFT_BUTTON),d=8}, }
-},
--- 5. walk: into right wall
-{ x = 108, y = 116, inputs = {
+}
+-- walk: into right wall
+replays[5] = { x = 108, y = 116, inputs = {
    {b=0,d=3},
    {b=bor(RIGHT_BUTTON),d=8},
    {b=bor(RIGHT_BUTTON),d=8}, }
 }
+-- upward: through bottom left, harder
+replays[6] = { x = 71, y = 116, inputs = {
+   {b=bor(LEFT_BUTTON),d=7},
+   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=5},
+   {b=0,d=5} }
 }
-replay_only = nil
 
 function _init()
   if (is_replaying) then
@@ -428,10 +433,11 @@ function update_player_airborne_kinetics(player, next)
     local flags = fget(mget(next.cellx, next.celly))
     player.cells[#player.cells + 1] = {x = next.cellx, y = next.celly}
     if (band(flags, SOLID_GROUND) > 0) then
+
       local nextx = player.x
       local nexty = player.y
       if (player.vx < 0) then
-        nextx = (next.cellx)*8+player.w/2
+        nextx = (next.cellx+1)*8+player.w/2
       end
       if (player.vx > 0) then
         nextx = next.cellx*8-player.w/2
@@ -443,13 +449,12 @@ function update_player_airborne_kinetics(player, next)
         nexty = next.celly*8-player.h/2
       end
 
-
       local magx
       local magy
       magx = abs(player.x - nextx)
       magy = abs(player.y - nexty)
 
-      if (magx < magy) then
+      if (magx <= magy) then
         next.x = nextx
         player.vx = 0
         next.is_updated = true
@@ -462,6 +467,7 @@ function update_player_airborne_kinetics(player, next)
         end
         if (player.vy > 0) then
           next.y = nexty
+          next.x = player.x + player.vx
           player.vy = 0
           player.state = STANDING
           player.jump_direction = 0
@@ -503,7 +509,7 @@ function draw_level()
 end
 
 function draw_player(player)
-  draw_player_debug(player)
+  --draw_player_debug(player)
   spr(7,player.x-4,player.y-4)
 end
 
