@@ -24,13 +24,62 @@ SOLID_GROUND = 1
 
 t = 0
 players = {}
-is_replaying = false
+is_running = true
+is_replaying = true
 replay_inputs = {}
+replay_inputs_index = 1
+replay_inputs_index_t = 0
 replay_index = 1
-replay_index_t = 0
+lead_countdown = 3
+
+replays = {
+-- 1. drop: through top right
+{ x = 35, y = 92, inputs = {
+   {b=RIGHT_BUTTON,d=3},
+   {b=bor(RIGHT_BUTTON,JUMP_BUTTON),d=1},
+   {b=RIGHT_BUTTON,d=3},
+   {b=bor(LEFT_BUTTON),d=18},
+   {b=0,d=5} }
+},
+-- 2. drop: into right side
+{ x = 37, y = 92, inputs = {
+   {b=RIGHT_BUTTON,d=3},
+   {b=bor(RIGHT_BUTTON,JUMP_BUTTON),d=1},
+   {b=RIGHT_BUTTON,d=3},
+   {b=bor(LEFT_BUTTON),d=18},
+   {b=0,d=2} }
+},
+-- 3. upward: through bottom left
+{ x = 51, y = 114, inputs = {
+   {b=bor(LEFT_BUTTON),d=3},
+   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=4},
+   {b=0,d=5} }
+},
+-- 4. walk: into left wall
+{ x = 18, y = 116, inputs = {
+   {b=0,d=3},
+   {b=bor(LEFT_BUTTON),d=8},
+   {b=bor(LEFT_BUTTON),d=8}, }
+},
+-- 5. walk: into right wall
+{ x = 108, y = 116, inputs = {
+   {b=0,d=3},
+   {b=bor(RIGHT_BUTTON),d=8},
+   {b=bor(RIGHT_BUTTON),d=8}, }
+}
+}
+replay_only = nil
 
 function _init()
-  init_replay()
+  if (is_replaying) then
+    if (replay_only != nil) then
+      replay_index = replay_only
+    end
+    init_replay(replay_index)
+  end
+  if (not is_replaying) then
+    init_gameplay()
+  end
 end
 
 function init_gameplay()
@@ -40,26 +89,50 @@ function init_gameplay()
   end
 end
 
-function init_replay()
-  t = 0
-  for i = 0,1 do
-    players[i] = create_player(0,60,114)
+function init_replay(index)
+  local is_finished = false
+
+  local replay = replays[index]
+  if (replay != nil) then
+    for i = 0,1 do
+      players[i] = create_player(0, replay.x, replay.y)
+    end
+    replay_inputs = replay.inputs
+
+    t = 0
+    replay_inputs_index = 1
+    replay_inputs_index_t = 0
   end
-  replay_inputs = {
-    {b=bor(LEFT_BUTTON),d=5},
-    {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=5}
-  }
-  is_replaying = true
-  replay_index = 1
-  replay_index_t = 0
+  if (replay == nil) then
+    is_finished = true
+  end
+
+  return is_finished
 end
 
 function _update()
-  if (not is_replaying) then
-    update_gameplay()
-  end
-  if (is_replaying) then
-    update_replay()
+  if (is_running) then
+    if (not is_replaying) then
+      update_gameplay()
+    end
+    if (is_replaying) then
+      if (lead_countdown == 0) then
+        is_replay_finished = update_replay()
+        if (is_replay_finished and replay_only != nil) then
+          is_running = false
+        end
+        if (is_replay_finished and replay_only == nil) then
+          replay_index += 1
+          is_finished = init_replay(replay_index)
+          if (is_finished) then
+            is_running = false
+          end
+        end
+      end
+    end
+    if (lead_countdown > 0) then
+      lead_countdown -= 1
+    end
   end
 end
 
@@ -80,11 +153,15 @@ function update_gameplay()
 end
 
 function update_replay()
+  local is_replay_finished
+
   update_time()
-  update_replay_buttons()
+  is_replay_finished = update_replay_buttons()
   for player in all(players) do
     update_player(player)
   end
+
+  return is_replay_finished
 end
 
 function update_player_buttons()
@@ -96,16 +173,20 @@ end
 
 function update_replay_buttons()
   local buttons = 0
-  local replay = replay_inputs[replay_index]
+  local replay = replay_inputs[replay_inputs_index]
+  local is_replay_finished = false
   if replay != nil then
     buttons = replay.b
-    replay_index_t += 1
-    if (replay_index_t >= replay.d) then
-      replay_index += 1
-      replay_index_t = 0
+    replay_inputs_index_t += 1
+    if (replay_inputs_index_t >= replay.d) then
+      replay_inputs_index += 1
+      replay_inputs_index_t = 0
     end
   end
   players[1].buttons = buttons
+  is_replay_finished = replay_inputs_index == #replay_inputs
+
+  return is_replay_finished
 end
 
 function create_player(input,x,y)
