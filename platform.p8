@@ -1,26 +1,27 @@
 pico-8 cartridge // http://www.pico-8.com
 version 5
 __lua__
-STANDING = 1
-AIRBORNE = 2
-JUMPING = 3
+standing = 1
+airborne = 2
+jumping = 3
 
-LEFT_BUTTON = 1
-RIGHT_BUTTON = 2
-JUMP_BUTTON = 4
+left_button = 1
+right_button = 2
+jump_button = 4
 
-JUMP_TIME = 3
-JUMP_SPEED = 6
-MAX_TIME = 20000
-MAX_RUN_SPEED = 4
-RUN_ACCEL = 1
-GRAVITY_ACCEL = 0.8
-STANDING_FRICTION = 0.6
-MIN_FRICTION_SPEED = 0.4
-AIR_ACCEL = 0.7
-AIR_FRICTION = 0.8
+jump_time = 3
+jump_speed = 6
+max_time = 20000
+max_run_speed = 4
+run_accel = 1
+gravity_accel = 0.8
+standing_friction = 0.6
+min_friction_speed = 0.4
+air_accel = 0.7
+air_friction = 0.8
+terminal_velocity=7
 
-SOLID_GROUND = 1
+solid_ground = 1
 
 t = 0
 players = {}
@@ -37,61 +38,61 @@ lead_countdown = 3
 replays = {}
 -- drop: through top right
 replays[1] = { x = 35, y = 92, inputs = {
-   {b=RIGHT_BUTTON,d=3},
-   {b=bor(RIGHT_BUTTON,JUMP_BUTTON),d=1},
-   {b=RIGHT_BUTTON,d=3},
-   {b=bor(LEFT_BUTTON),d=18},
+   {b=right_button,d=3},
+   {b=bor(right_button,jump_button),d=1},
+   {b=right_button,d=3},
+   {b=bor(left_button),d=18},
    {b=0,d=0} }
 }
 -- drop: into right side
 replays[2] = { x = 37, y = 92, inputs = {
-   {b=RIGHT_BUTTON,d=3},
-   {b=bor(RIGHT_BUTTON,JUMP_BUTTON),d=1},
-   {b=RIGHT_BUTTON,d=3},
-   {b=bor(LEFT_BUTTON),d=18},
+   {b=right_button,d=3},
+   {b=bor(right_button,jump_button),d=1},
+   {b=right_button,d=3},
+   {b=bor(left_button),d=18},
    {b=0,d=2} }
 }
 -- upward: through bottom left
 replays[3] = { x = 51, y = 114, inputs = {
-   {b=bor(LEFT_BUTTON),d=3},
-   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=4},
+   {b=bor(left_button),d=3},
+   {b=bor(left_button,jump_button),d=4},
    {b=0,d=5} }
 }
 -- walk: into left wall
 replays[4] = { x = 18, y = 116, inputs = {
    {b=0,d=3},
-   {b=bor(LEFT_BUTTON),d=8},
-   {b=bor(LEFT_BUTTON),d=8}, }
+   {b=bor(left_button),d=8},
+   {b=bor(left_button),d=8}, }
 }
 -- walk: into right wall
 replays[5] = { x = 108, y = 116, inputs = {
    {b=0,d=3},
-   {b=bor(RIGHT_BUTTON),d=8},
-   {b=bor(RIGHT_BUTTON),d=8}, }
+   {b=bor(right_button),d=8},
+   {b=bor(right_button),d=8}, }
 }
 -- upward: through bottom left, harder
 replays[6] = { x = 71, y = 116, inputs = {
-   {b=bor(LEFT_BUTTON),d=7},
-   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=5},
+   {b=bor(left_button),d=7},
+   {b=bor(left_button,jump_button),d=5},
    {b=0,d=5} }
 }
 -- upward: through bottom left, harder, stop at error
 replays[7] = { x = 71, y = 116, inputs = {
-   {b=bor(LEFT_BUTTON),d=7},
-   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=2},
+   {b=bor(left_button),d=7},
+   {b=bor(left_button,jump_button),d=2},
    {b=0,d=0} }
 }
 -- downward: long jump
 replays[8] = { x = 105, y = 69, inputs = {
-   {b=bor(LEFT_BUTTON),d=3},
-   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=20},
+   {b=bor(left_button),d=3},
+   {b=bor(left_button,jump_button),d=20},
    {b=0,d=5},
    {b=0,d=5} }
 }
 -- downward: long jump, paused
 replays[8] = { x = 105, y = 69, inputs = {
-   {b=bor(LEFT_BUTTON),d=3},
-   {b=bor(LEFT_BUTTON,JUMP_BUTTON),d=17},
+   {b=bor(left_button),d=3},
+   {b=bor(left_button,jump_button),d=17},
    {b=0,d=0} }
 }
 
@@ -224,18 +225,18 @@ function create_player(input,x,y)
   player.ax = 0
   player.vy = 0
   player.vx = 0
-  player.state = AIRBORNE
+  player.state = airborne
   player.jump_until = 0
   player.jump_released = true
   return player
 end
 
 function update_time()
-  if (t > MAX_TIME) then
-    t = t - MAX_TIME
+  if (t > max_time) then
+    t = t - max_time
 
     for player in all(players) do
-      player.jump_until -= MAX_TIME
+      player.jump_until -= max_time
     end
   end
   t += 1
@@ -248,22 +249,22 @@ function update_player(player)
 end
 
 function update_player_inputs(player)
-  if (player.state == STANDING) then
-    if (band(player.buttons, LEFT_BUTTON) > 0) then
-      player.ax = -RUN_ACCEL
+  if (player.state == standing) then
+    if (band(player.buttons, left_button) > 0) then
+      player.ax = -run_accel
     end
-    if (band(player.buttons, RIGHT_BUTTON) > 0) then
-      player.ax = RUN_ACCEL
+    if (band(player.buttons, right_button) > 0) then
+      player.ax = run_accel
     end
-    if (band(player.buttons, RIGHT_BUTTON) == 0 and band(player.buttons, LEFT_BUTTON) == 0) then
+    if (band(player.buttons, right_button) == 0 and band(player.buttons, left_button) == 0) then
       player.ax = 0
     end
   end
 
-  if (player.state == STANDING and band(player.buttons, JUMP_BUTTON) > 0 and player.jump_released) then
-    player.state = JUMPING
-    player.jump_until = t + JUMP_TIME
-    player.vy =- JUMP_SPEED
+  if (player.state == standing and band(player.buttons, jump_button) > 0 and player.jump_released) then
+    player.state = jumping
+    player.jump_until = t + jump_time
+    player.vy =- jump_speed
     player.jump_released = false
     player.jump_direction = 0
     if (player.vx < 0) then
@@ -273,51 +274,51 @@ function update_player_inputs(player)
       player.jump_direction = 1
     end
   end
-  if (player.jump_released == false and band(player.buttons, JUMP_BUTTON) == 0) then
+  if (player.jump_released == false and band(player.buttons, jump_button) == 0) then
     player.jump_released = true
   end
-  if (player.state == JUMPING and band(player.buttons, JUMP_BUTTON) == 0) then
-    player.state = AIRBORNE
+  if (player.state == jumping and band(player.buttons, jump_button) == 0) then
+    player.state = airborne
   end
-  if (player.state == JUMPING and t == player.jump_until) then
+  if (player.state == jumping and t == player.jump_until) then
     player.jump_until = 0
-    player.state = AIRBORNE
+    player.state = airborne
   end
 
-  if (player.state == JUMPING or player.state == AIRBORNE) then
+  if (player.state == jumping or player.state == airborne) then
     player.ax = 0
-    if (band(player.buttons, LEFT_BUTTON) > 0) then
-      player.ax = -AIR_ACCEL
+    if (band(player.buttons, left_button) > 0) then
+      player.ax = -air_accel
       player.jump_direction = -1
     end
-    if (band(player.buttons, RIGHT_BUTTON) > 0) then
-      player.ax = AIR_ACCEL
+    if (band(player.buttons, right_button) > 0) then
+      player.ax = air_accel
       player.jump_direction = 1
     end
   end
 end
 
 function update_player_forces(player)
-  if (player.state == STANDING and player.ax == 0) then
-    player.vx -= player.vx * STANDING_FRICTION
+  if (player.state == standing and player.ax == 0) then
+    player.vx -= player.vx * standing_friction
   end
-  if ((player.state == AIRBORNE or player.state == JUMPING) and player.ax == 0) then
-    player.vx -= player.vx * AIR_FRICTION
+  if ((player.state == airborne or player.state == jumping) and player.ax == 0) then
+    player.vx -= player.vx * air_friction
   end
-  if (player.state == AIRBORNE and player.vy < 3) then
-    player.vy += GRAVITY_ACCEL
+  if (player.state == airborne and player.vy < terminal_velocity) then
+    player.vy += gravity_accel
   end
   player.vx += player.ax
-  if (player.vx > MAX_RUN_SPEED) then
-    player.vx = MAX_RUN_SPEED
+  if (player.vx > max_run_speed) then
+    player.vx = max_run_speed
   end
-  if (player.vx < -MAX_RUN_SPEED) then
-    player.vx = -MAX_RUN_SPEED
+  if (player.vx < -max_run_speed) then
+    player.vx = -max_run_speed
   end
 end
 
 function update_player_kinetics(player)
-  if (player.vx > -MIN_FRICTION_SPEED and player.vx < MIN_FRICTION_SPEED) then
+  if (player.vx > -min_friction_speed and player.vx < min_friction_speed) then
     player.vx = 0
     player.x = flr(player.x)
   end
@@ -330,10 +331,10 @@ function update_player_kinetics(player)
   player.cells = {}
 
   update_player_common_kinetics(player, next)
-  if (player.state == AIRBORNE or player.state == JUMPING) then
+  if (player.state == airborne or player.state == jumping) then
     update_player_airborne_kinetics(player, next)
   end
-  if (player.state == STANDING) then
+  if (player.state == standing) then
     update_player_standing_kinetics(player, next)
   end
 
@@ -383,7 +384,7 @@ function update_player_common_kinetics(player, next)
     xflags = bor(tflags, bflags)
   end
 
-  if (band(xflags, SOLID_GROUND) > 0) then
+  if (band(xflags, solid_ground) > 0) then
     if (dx < 0) then
       next.x = (next.cellx+1)*8+player.w/2
       player.vx = 0
@@ -444,7 +445,7 @@ function update_player_airborne_kinetics(player, next)
     yflags = bor(lflags, rflags)
   end
 
-  if (band(yflags, SOLID_GROUND) > 0) then
+  if (band(yflags, solid_ground) > 0) then
     if (dy < 0) then
       next.y = (next.celly+1)*8+player.h/2
       player.vy = 0
@@ -453,7 +454,7 @@ function update_player_airborne_kinetics(player, next)
     if (dy > 0) then
       next.y = next.celly*8-player.h/2
       player.vy = 0
-      player.state = STANDING
+      player.state = standing
       player.jump_direction = 0
       next.is_updated = true
     end
@@ -462,7 +463,7 @@ function update_player_airborne_kinetics(player, next)
   if (not next.is_updated and next.cellx != nil and next.celly != nil) then
     local flags = fget(mget(next.cellx, next.celly))
     player.cells[#player.cells + 1] = {x = next.cellx, y = next.celly}
-    if (band(flags, SOLID_GROUND) > 0) then
+    if (band(flags, solid_ground) > 0) then
 
       local nextx = player.x
       local nexty = player.y
@@ -499,7 +500,7 @@ function update_player_airborne_kinetics(player, next)
           next.y = nexty
           next.x = player.x + player.vx
           player.vy = 0
-          player.state = STANDING
+          player.state = standing
           player.jump_direction = 0
           next.is_updated = true
         end
@@ -529,8 +530,8 @@ function update_player_standing_kinetics(player, next)
 
   flags = bor(lflags, rflags)
 
-  if (band(flags, SOLID_GROUND) == 0) then
-    player.state = AIRBORNE
+  if (band(flags, solid_ground) == 0) then
+    player.state = airborne
   end
 end
 
