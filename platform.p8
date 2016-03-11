@@ -40,7 +40,7 @@ replays = {}
 replays[1] = { x = 35, y = 92, inputs = {
    {b=right_button,d=3},
    {b=bor(right_button,jump_button),d=1},
-   {b=right_button,d=3},
+   {b=right_button,d=2},
    {b=bor(left_button),d=18},
    {b=0,d=0} }
 }
@@ -82,18 +82,26 @@ replays[7] = { x = 71, y = 116, inputs = {
    {b=bor(left_button,jump_button),d=2},
    {b=0,d=0} }
 }
--- downward: long jump
-replays[8] = { x = 105, y = 69, inputs = {
-   {b=bor(left_button),d=3},
-   {b=bor(left_button,jump_button),d=20},
-   {b=0,d=5},
-   {b=0,d=5} }
-}
 -- downward: long jump, paused
 replays[8] = { x = 105, y = 69, inputs = {
    {b=bor(left_button),d=3},
    {b=bor(left_button,jump_button),d=17},
    {b=0,d=0} }
+}
+-- downward: long jump
+replays[9] = { x = 105, y = 69, inputs = {
+   {b=bor(left_button),d=3},
+   {b=bor(left_button,jump_button),d=20},
+   {b=0,d=5},
+   {b=0,d=5} }
+}
+-- downward: terminal velocity
+replays[1] = { x = 50, y = 14, inputs = {
+   {b=0,d=5},
+   {b=0,d=5},
+   {b=bor(left_button),d=10},
+   {b=0,d=5},
+    }
 }
 
 function _init()
