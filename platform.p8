@@ -20,6 +20,7 @@ min_friction_speed = 0.4
 air_accel = 0.7
 air_friction = 0.8
 terminal_velocity=7
+jump_grace_time = 2
 
 jump_sound = 1
 sfx_channel = 2
@@ -237,8 +238,9 @@ function create_player(input,x,y)
   player.vy = 0
   player.vx = 0
   player.state = airborne
+  player.last_stand_time = nil
   player.jump_until = 0
-  player.jump_released = true
+  player.is_jump_released = true
   return player
 end
 
@@ -248,6 +250,7 @@ function update_time()
 
     for player in all(players) do
       player.jump_until -= max_time
+      player.last_stand_time -= max_time
     end
   end
   t += 1
@@ -272,13 +275,15 @@ function update_player_inputs(player)
     end
   end
 
-  if (player.state == standing and band(player.buttons, jump_button) > 0 and player.jump_released) then
+    should_jump(player)
+  if (should_jump(player)) then
     sfx(jump_sound, sfx_channel)
+    player.last_stand_time = nil
 
     player.state = jumping
     player.jump_until = t + jump_time
     player.vy =- jump_speed
-    player.jump_released = false
+    player.is_jump_released = false
     player.jump_direction = 0
     if (player.vx < 0) then
       player.jump_direction = -1
@@ -287,8 +292,8 @@ function update_player_inputs(player)
       player.jump_direction = 1
     end
   end
-  if (player.jump_released == false and band(player.buttons, jump_button) == 0) then
-    player.jump_released = true
+  if (player.is_jump_released == false and band(player.buttons, jump_button) == 0) then
+    player.is_jump_released = true
   end
   if (player.state == jumping and band(player.buttons, jump_button) == 0) then
     player.state = airborne
@@ -309,6 +314,16 @@ function update_player_inputs(player)
       player.jump_direction = 1
     end
   end
+end
+
+function should_jump(player)
+  local is_standing = player.state == standing
+  local is_in_grace_period = player.last_stand_time ~= nil and player.state == airborne and t - player.last_stand_time < jump_grace_time
+  local jump_allowed = is_standing or is_in_grace_period
+  local jump_available = player.is_jump_released
+  local jump_requested = band(player.buttons, jump_button) > 0
+
+  return jump_allowed and jump_available and jump_requested
 end
 
 function update_player_forces(player)
@@ -544,6 +559,9 @@ function update_player_standing_kinetics(player, next)
   flags = bor(lflags, rflags)
 
   if (band(flags, solid_ground) == 0) then
+    if player.state == standing then
+      player.last_stand_time = t
+    end
     player.state = airborne
   end
 end
@@ -562,6 +580,7 @@ end
 function draw_player_debug(player)
   print(player.x)
   print(player.y)
+  print(player.last_stand_time)
   for cell in all(player.cells) do
     local col = 3
     if (cell.col != nil) then
