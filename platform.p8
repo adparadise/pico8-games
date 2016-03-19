@@ -21,6 +21,7 @@ air_accel = 0.7
 air_friction = 0.8
 terminal_velocity=7
 jump_grace_time = 2
+jump_expiry_time = 4
 
 jump_sound = 1
 sfx_channel = 2
@@ -241,6 +242,7 @@ function create_player(input,x,y)
   player.last_stand_time = nil
   player.jump_until = 0
   player.is_jump_released = true
+  player.jump_request_time = nil
   return player
 end
 
@@ -275,7 +277,12 @@ function update_player_inputs(player)
     end
   end
 
-    should_jump(player)
+  if band(player.buttons, jump_button) > 0 and player.jump_request_time == nil then
+     player.jump_request_time = t
+  elseif band(player.buttons, jump_button) == 0 then
+     player.jump_request_time = nil
+  end
+
   if (should_jump(player)) then
     sfx(jump_sound, sfx_channel)
     player.last_stand_time = nil
@@ -320,7 +327,7 @@ function should_jump(player)
   local is_standing = player.state == standing
   local is_in_grace_period = player.last_stand_time ~= nil and player.state == airborne and t - player.last_stand_time < jump_grace_time
   local jump_allowed = is_standing or is_in_grace_period
-  local jump_available = player.is_jump_released
+  local jump_available = player.is_jump_released and player.jump_request_time ~= nil and t - player.jump_request_time < jump_expiry_time
   local jump_requested = band(player.buttons, jump_button) > 0
 
   return jump_allowed and jump_available and jump_requested
@@ -580,7 +587,7 @@ end
 function draw_player_debug(player)
   print(player.x)
   print(player.y)
-  print(player.last_stand_time)
+  print(player.jump_request_time)
   for cell in all(player.cells) do
     local col = 3
     if (cell.col != nil) then
