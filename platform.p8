@@ -11,7 +11,7 @@ jump_button = 4
 
 jump_time = 3
 jump_speed = 6
-max_time = 20000
+max_time = 1000
 max_run_speed = 4
 run_accel = 1
 gravity_accel = 0.8
@@ -247,7 +247,7 @@ function create_player(input,x,y)
   player.vx = 0
   player.direction = false
   player.state = airborne
-  player.last_stand_time = nil
+  player.last_stand_time = 0
   player.jump_until = 0
   player.is_jump_released = true
   player.jump_request_time = nil
@@ -260,7 +260,9 @@ function update_time()
 
     for player in all(players) do
       player.jump_until -= max_time
-      player.last_stand_time -= max_time
+      if player.last_stand_time != nil then
+        player.last_stand_time -= max_time
+      end
     end
   end
   t += 1
@@ -602,8 +604,8 @@ function draw_player(player)
   spr(cell_index, player.x-4, player.y-4, 1, 1, player.direction)
 end
 
-function cell_index_from_animation(animation, t)
-  local index = flr(t / animation['divisor']) % animation['cycle_len'] + 1
+function cell_index_from_animation(animation, pt)
+  local index = flr(pt / animation['divisor']) % animation['cycle_len'] + 1
   local cell_index = animation['cells'][index]
 
   return cell_index
@@ -612,7 +614,7 @@ end
 function draw_player_debug(player)
   print(player.x)
   print(player.y)
-  print(player.direction == 1)
+  print(t)
   for cell in all(player.cells) do
     local col = 3
     if (cell.col != nil) then
