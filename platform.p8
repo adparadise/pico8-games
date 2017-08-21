@@ -598,9 +598,12 @@ function draw_player(player)
   if (show_debug) then
     draw_player_debug(player)
   end
-  local animation = animations['run']
 
-  cell_index = cell_index_from_animation(animation, player.x)
+  local cell_index
+  if player.state == standing then
+     local animation = animations['run']
+     cell_index = cell_index_from_animation(animation, player.x)
+  end
   spr(cell_index, player.x-4, player.y-4, 1, 1, player.direction)
 end
 
